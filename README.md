@@ -1,0 +1,1 @@
+# Nautilus_Trader_XAUUSD_Scalping_Bot
