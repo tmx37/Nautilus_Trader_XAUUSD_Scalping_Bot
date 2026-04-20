@@ -1,17 +1,25 @@
+import sys
+
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from pathlib import Path
+
 from nautilus_trader.backtest.engine import BacktestEngine
-from nautilus_trader.backtest.models import BacktestVenueConfig
-from nautilus_trader.model.identifiers import InstrumentId
-from nautilus_trader.model.data import Bar
-from nautilus_trader.model.data import BarType
+from nautilus_trader.backtest.config import BacktestEngineConfig
+
+from nautilus_trader.model.enums import AccountType, OmsType
+from nautilus_trader.model.currencies import USD
+from nautilus_trader.model.objects import Money, Quantity
+from nautilus_trader.model.identifiers import TraderId, Venue, InstrumentId
+from nautilus_trader.model.data import Bar, BarType
 
 from nautilus_trader.trading.strategy import Strategy
 from nautilus_trader.indicators.averages import ExponentialMovingAverage
-from nautilus_trader.indicators.atr import AverageTrueRange
+from nautilus_trader.indicators import AverageTrueRange
 from nautilus_trader.model.orders import MarketOrder
-from nautilus_trader.model.objects import Quantity
+
+from nautilus_trader.persistence.wranglers import BarDataWrangler
 
 
 # =========================
@@ -83,21 +91,23 @@ class XAUEMAStrategy(Strategy):
 # =========================
 # BACKTEST ENGINE
 # =========================
-def run_backtest():
-
-    df = pd.read_csv("data/XAUUSD_M1.csv")
-
-    engine = BacktestEngine()
-
-    venue = BacktestVenueConfig(
-        name="SIM",
-        oms_type="HEDGING",
-        account_type="MARGIN",
-        base_currency="USD",
-        starting_balances=["10000 USD"],
+def run_backtest(input):
+    
+    path_string = Path(input)
+    
+    engine = BacktestEngine(
+        config=BacktestEngineConfig(trader_id=TraderId("BACKTESTER-001"))
     )
 
-    engine.add_venue(venue)
+    venue = Venue("SIM")
+
+    engine.add_venue(
+        venue = venue,
+        oms_type=OmsType.HEDGING,
+        account_type=AccountType.MARGIN,
+        base_currency=USD,
+        starting_balances=[Money(1_000, USD)],
+    )
 
     instrument_id = InstrumentId.from_str("XAUUSD.SIM")
 
@@ -109,24 +119,46 @@ def run_backtest():
     # =========================
     bars = []
 
-    for i in range(len(df)):
-
-        ts = pd.to_datetime(df["timestamp"][i])
-
-        bar = Bar(
-            bar_type=BarType.from_str("XAUUSD.SIM-1-MINUTE-LAST-EXTERNAL"),
-            open=df["open"][i],
-            high=df["high"][i],
-            low=df["low"][i],
-            close=df["close"][i],
-            volume=df["volume"][i],
-            ts_event=int(ts.timestamp() * 1e9),
-            ts_init=int(ts.timestamp() * 1e9),
+    # suddivido il dataset in chunks di dati, per ottimizzare il carico
+    chunk_size = 1000
+    for chunk in pd.read_csv(path_string, chunksize=chunk_size):
+        
+        # converto le colonne in formato leggibile da nautilus
+        chunk.columns = [c.strip("<>") for c in chunk.columns]
+        chunk.index = pd.to_datetime(chunk["date"] + " " + chunk["time"])
+        chunk = chunk.rename(columns={"tickvol": "volume"})[["open", "high", "low", "close", "volume"]]
+        
+        wrangler = BarDataWrangler(
+            bar_type=BarType.from_str("XAUUSD.SIM-10-MINUTE-LAST-EXTERNAL"),
+            instrument=instrument_id,  
         )
+        bars_chunk = wrangler.process(chunk)
+        engine.add_data(bars_chunk)
+    
+    # df = pd.read_csv(path_string)
+    # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    # print(df)
+    # print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 
-        bars.append(bar)
 
-    engine.add_data(bars)
+    ## OLD AI SLOP TO FORMAT CSV DATA 
+    # for i in range(len(df)):
+    #     print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    #     print(df["<TIME>"][i])
+    #     print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    #     ts = pd.to_datetime(df["<TIME>"][i])
+    #     bar = Bar(
+    #         bar_type=BarType.from_str("XAUUSD.SIM-1-MINUTE-LAST-EXTERNAL"),
+    #         open=df["open"][i],
+    #         high=df["high"][i],
+    #         low=df["low"][i],
+    #         close=df["close"][i],
+    #         volume=df["volume"][i],
+    #         ts_event=int(ts.timestamp() * 1e9),
+    #         ts_init=int(ts.timestamp() * 1e9),
+    #     )
+    #     bars.append(bar)
+    # engine.add_data(bars)
 
     # =========================
     # RUN
@@ -155,4 +187,5 @@ def run_backtest():
 
 
 if __name__ == "__main__":
-    run_backtest()
+    run_backtest(sys.argv[1])
+    
