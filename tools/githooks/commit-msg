@@ -1,0 +1,14 @@
+#!/bin/sh
+# Il titolo del commit deve citare un ADR, un esperimento o una fase (R3.5):
+#   [ADR-0001] ...   [EXP-0003] ...   [F1] ...
+# Esenti: merge, fixup!/squash!/amend!, revert.
+title=$(head -n 1 "$1")
+case "$title" in
+  "Merge "*|"fixup! "*|"squash! "*|"amend! "*|"Revert "*) exit 0 ;;
+esac
+if printf '%s\n' "$title" | grep -Eq '\[(ADR-[0-9]{4}|EXP-[0-9]{4}|F[0-5])\]'; then
+  exit 0
+fi
+echo "ERRORE: il titolo del commit deve contenere [ADR-NNNN], [EXP-NNNN] o [F0]..[F5]." >&2
+echo "Titolo: $title" >&2
+exit 1

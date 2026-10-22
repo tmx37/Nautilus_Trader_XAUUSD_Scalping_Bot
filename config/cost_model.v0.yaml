@@ -1,0 +1,38 @@
+# Modello di costi v0: solo valori documentati da Pepperstone EU, prima di qualsiasi misura sul demo.
+# Ogni versione successiva (v1, v2, …) nasce da un EXP di parità (PIANO §2.4 punto 6) e lo cita qui.
+# Gli importi in pip sono per lato, salvo indicazione.
+
+version: 0
+derived_from: documentazione Pepperstone EU (Costs & Charges v07/2025; pagina spreads-swaps-commissions)
+account_type: cTrader Razor
+
+commission:
+  # USD 3 per lato ogni 100.000 unità (USD 6 andata e ritorno), per qualsiasi valuta del conto.
+  # Fonte: https://pepperstone.com/en-eu/trading/spreads-swaps-commissions/
+  currency: USD
+  per_side_per_100k: 3.0
+  # Da confermare a runtime con ProtoOASymbol.commissionType / preciseTradingCommissionRate.
+
+spread_pips:
+  # Fonte: Costs & Charges v07/2025 (Razor). Il backtest usa lo spread bid/ask dei dati; questi valori
+  # servono come controllo e come minimo applicato quando lo spread dei dati è inferiore.
+  EURUSD: {min: 0.0, avg: 0.1}
+  GBPUSD: {min: null, avg: null}    # [DA VERIFICARE]
+  USDJPY: {min: null, avg: null}    # [DA VERIFICARE]
+  AUDUSD: {min: null, avg: null}    # [DA VERIFICARE]
+
+slippage_pips:
+  # IPOTESI iniziale, non misurata: da sostituire con le misure del demo (F3).
+  market_entry: 0.1
+  stop_loss: 0.3
+  stress_multiplier: 1.5            # stress test obbligatorio in F2
+
+swap:
+  # Valori per strumento letti ogni giorno da ProtoOASymbol (swapLong, swapShort, swapRollover3Days)
+  # e salvati dal demo; nessun valore fisso in v0. Convenzione del giorno triplo [DA VERIFICARE].
+  source: ctrader_symbol_daily_snapshot
+  rollover_time: "17:00 America/New_York"
+
+fx_conversion:
+  # Commissioni in USD e P&L in valuta di quotazione convertiti nella valuta del conto (EUR) al tasso mid.
+  account_currency: EUR

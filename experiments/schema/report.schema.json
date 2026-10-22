@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "experiments/schema/report.schema.json",
+  "title": "Report macchina-leggibile di un test (experiments/reports/EXP-NNNN/report.json)",
+  "description": "Stesso formato per backtest, walk-forward, demo e reale (PIANO §2.4). Importi nella valuta del conto; R = rischio pianificato all'ingresso.",
+  "type": "object",
+  "required": ["schema_version", "id", "kind", "commit", "prereg_sha", "data_hash", "period", "account_currency", "summary", "costs", "by_session", "by_regime", "by_instrument", "risk_states", "governor_decisions", "baselines", "robustness"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^EXP-[0-9]{4}$"},
+    "kind": {"enum": ["backtest", "walkforward", "lockbox", "montecarlo", "demo", "live", "spike"]},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "prereg_sha": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "data_hash": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "period": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {"start": {"type": "string", "format": "date"}, "end": {"type": "string", "format": "date"}}
+    },
+    "account_currency": {"type": "string", "pattern": "^[A-Z]{3}$"},
+    "summary": {
+      "type": "object",
+      "required": ["trades", "net_return_pct", "profit_factor", "expectancy_r", "max_drawdown_pct", "max_drawdown_days", "sharpe", "sortino", "win_rate", "exposure_time_pct", "avg_heat_pct"],
+      "properties": {
+        "trades": {"type": "integer", "minimum": 0},
+        "net_return_pct": {"type": "number"},
+        "profit_factor": {"type": ["number", "null"]},
+        "expectancy_r": {"type": ["number", "null"]},
+        "max_drawdown_pct": {"type": "number", "minimum": 0},
+        "max_drawdown_days": {"type": "number", "minimum": 0},
+        "sharpe": {"type": ["number", "null"], "description": "Annualizzato su rendimenti giornalieri."},
+        "sortino": {"type": ["number", "null"]},
+        "win_rate": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+        "exposure_time_pct": {"type": "number", "minimum": 0, "maximum": 100},
+        "avg_heat_pct": {"type": "number", "minimum": 0}
+      }
+    },
+    "costs": {
+      "type": "object",
+      "required": ["total", "spread", "commission", "swap", "slippage", "cost_per_trade_r", "cost_model"],
+      "properties": {
+        "total": {"type": "number"},
+        "spread": {"type": "number"},
+        "commission": {"type": "number"},
+        "swap": {"type": "number"},
+        "slippage": {"type": "number"},
+        "cost_per_trade_r": {"type": ["number", "null"]},
+        "cost_model": {"type": "string"}
+      }
+    },
+    "by_session": {
+      "type": "object",
+      "description": "Chiavi: asia, london, new_york, overlap.",
+      "additionalProperties": {"$ref": "#/$defs/bucket"}
+    },
+    "by_regime": {
+      "type": "object",
+      "description": "Chiavi: vol_low/vol_mid/vol_high (terzili del percentile ATR) × trend/range (efficiency ratio a 20 barre).",
+      "additionalProperties": {"$ref": "#/$defs/bucket"}
+    },
+    "by_instrument": {"type": "object", "additionalProperties": {"$ref": "#/$defs/bucket"}},
+    "risk_states": {
+      "type": "object",
+      "description": "Percentuale di tempo trascorso in ogni stato del gestore del rischio.",
+      "properties": {
+        "NORMALE": {"type": "number"}, "DIFENSIVO": {"type": "number"},
+        "PAUSA": {"type": "number"}, "ARRESTO": {"type": "number"}
+      }
+    },
+    "governor_decisions": {
+      "type": "object",
+      "description": "Conteggio per tipo: approved, reduced, rejected_<motivo>.",
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "baselines": {
+      "type": "object",
+      "required": ["random_entry"],
+      "properties": {
+        "random_entry": {
+          "type": "object",
+          "required": ["seeds", "expectancy_r_p50", "expectancy_r_p95", "strategy_percentile"],
+          "properties": {
+            "seeds": {"type": "integer"},
+            "expectancy_r_p50": {"type": "number"},
+            "expectancy_r_p95": {"type": "number"},
+            "strategy_percentile": {"type": "number", "minimum": 0, "maximum": 100}
+          }
+        },
+        "cash": {"type": "object"},
+        "buy_and_hold": {"type": "object"}
+      }
+    },
+    "robustness": {
+      "type": "object",
+      "properties": {
+        "wfe": {"type": ["number", "null"], "description": "Rendimento annualizzato OOS / IS."},
+        "oos_windows_positive_pct": {"type": ["number", "null"]},
+        "param_plateau_ok": {"type": ["boolean", "null"]},
+        "mc_max_dd_p95_pct": {"type": ["number", "null"]},
+        "mc_p_arresto_12m": {"type": ["number", "null"]},
+        "dsr": {"type": ["number", "null"]},
+        "trials_cumulative": {"type": "integer", "minimum": 0},
+        "cost_stress_1_5x_expectancy_r": {"type": ["number", "null"]}
+      }
+    },
+    "parity": {
+      "type": "object",
+      "description": "Solo per demo/reale: scarto rispetto al backtest ombra sullo stesso periodo.",
+      "properties": {
+        "signal_match_pct": {"type": "number"},
+        "missed_trades_pct": {"type": "number"},
+        "entry_slippage_mean_pips": {"type": "number"},
+        "entry_slippage_p95_pips": {"type": "number"},
+        "sl_slippage_mean_pips": {"type": "number"},
+        "spread_real_vs_model_ratio": {"type": "number"},
+        "latency_submit_fill_ms_p50": {"type": "number"},
+        "latency_submit_fill_ms_p95": {"type": "number"}
+      }
+    }
+  },
+  "$defs": {
+    "bucket": {
+      "type": "object",
+      "required": ["trades", "expectancy_r", "net_pnl"],
+      "properties": {
+        "trades": {"type": "integer", "minimum": 0},
+        "expectancy_r": {"type": ["number", "null"]},
+        "net_pnl": {"type": "number"},
+        "win_rate": {"type": ["number", "null"]}
+      }
+    }
+  }
+}

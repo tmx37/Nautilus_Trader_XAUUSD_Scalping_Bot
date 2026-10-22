@@ -1,0 +1,31 @@
+# Parametri del gestore del rischio (riskgov). Schema e motivazioni: docs/PIANO.md §2.3, ADR 0004.
+# VALORI INIZIALI: vanno calibrati con il Monte Carlo in F2 e congelati in un ADR prima di F3.
+# Le percentuali sono frazioni dell'equity corrente (0.01 = 1%). I DD sono dal massimo di equity di chiusura giornaliera.
+# cap_iniziale serve SOLO come E0 per il floor: il sizing non lo usa mai (R1.2).
+# riskgov.core.config valida i vincoli fra i parametri (es. K >= arresto.enter_dd).
+
+risk:
+  account: {currency: EUR, cap_iniziale: 2000}
+  r_state: {NORMALE: 0.010, DIFENSIVO: 0.005, PAUSA: 0, ARRESTO: 0}
+  f4_ramp: {r_normale: 0.005, trades: 30}       # primi 30 trade in reale a rischio dimezzato
+  cppi: {K: 0.20, lambda: 0.5, m: 0.05}         # F = max(F_prec, E0*(1-K) + lambda*(HWM-E0)); budget <= m*(E-F)
+  regime:
+    hwm_basis: daily_close_equity
+    difensivo: {enter_dd: 0.06, exit_dd: 0.03, min_trades: 5}
+    pausa: {enter_dd: 0.10, min_days: 10, shadow_min_trades: 8, max_days: 20}
+    arresto: {enter_dd: 0.15, repeat_pausa_days: 60}
+    cusum: {k_r: 0.1, h_r: 6.0}                 # S = max(0, S + k - R), allarme se S > h
+  limits:
+    day_boundary: "17:00 America/New_York"
+    daily: {NORMALE: 0.02, DIFENSIVO: 0.01}     # perdita impegnata = realizzata + rischio aperto (con gap) + nuovo trade
+    weekly: {NORMALE: 0.04, DIFENSIVO: 0.02}
+    heat_cap: {NORMALE: 0.02, DIFENSIVO: 0.01}  # rischio aperto totale corretto per i gap
+    max_positions: {NORMALE: 3, DIFENSIVO: 2}
+    currency_net_risk: 0.015
+    margin_used_cap: 0.20
+    allow_adds: false                           # niente aggiunte, mediazioni, griglie o martingale
+  gaps: {quantile: 0.995, weekend_heat_cap: 0.015, no_entry_after_fri_utc: "16:00"}
+  news: {calendar_file: config/events.yaml, before_min: 30, after_min: 30}
+  execution: {sl_confirm_s: 10, sl_retries: 3, stale_quote_s: 30, inbound_idle_s: 45}
+  backstop: {max_notional_x_equity: 8}          # RiskEngine di Nautilus: max_notional_per_order
+  watchdog: {poll_s: 60, naked_grace_s: 120, emergency_sl_risk: 0.02, hard_dd: 0.20}

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Registro esperimenti append-only (R3.2). Attivazione: git config core.hooksPath tools/githooks
+exec python3 tools/check_registry_append_only.py

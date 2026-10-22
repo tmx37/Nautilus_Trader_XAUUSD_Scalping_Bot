@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "experiments/schema/prereg.schema.json",
+  "title": "Pre-registrazione di un esperimento (experiments/prereg/EXP-NNNN.yaml)",
+  "description": "Va committata prima dell'esecuzione. Dopo l'esecuzione non si modifica: l'esecutore salva lo sha256 del file e un cambio di criteri diventa visibile.",
+  "type": "object",
+  "required": ["id", "kind", "hypothesis", "windows", "instruments", "params", "criteria", "baselines", "trials_before", "data_manifest_sha", "cost_model", "risk_config"],
+  "properties": {
+    "id": {"type": "string", "pattern": "^EXP-[0-9]{4}$"},
+    "kind": {"enum": ["backtest", "walkforward", "lockbox", "montecarlo", "demo", "live", "spike"]},
+    "hypothesis": {
+      "type": "object",
+      "required": ["id", "iteration", "text", "market_logic"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^H-[0-9]{3}$"},
+        "iteration": {"type": "integer", "minimum": 1, "maximum": 3},
+        "text": {"type": "string", "minLength": 10},
+        "market_logic": {"type": "string", "minLength": 10},
+        "previous_exp": {"type": ["string", "null"], "pattern": "^EXP-[0-9]{4}$"}
+      }
+    },
+    "windows": {
+      "type": "object",
+      "properties": {
+        "in_sample": {"$ref": "#/$defs/range"},
+        "out_of_sample": {"$ref": "#/$defs/range"},
+        "walkforward": {
+          "type": "object",
+          "required": ["train_months", "test_months", "step_months"],
+          "properties": {
+            "train_months": {"type": "integer", "minimum": 1},
+            "test_months": {"type": "integer", "minimum": 1},
+            "step_months": {"type": "integer", "minimum": 1}
+          }
+        },
+        "lockbox": {"$ref": "#/$defs/range"}
+      }
+    },
+    "instruments": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "params": {
+      "type": "object",
+      "properties": {
+        "fixed": {"type": "object"},
+        "grid": {"type": "object", "additionalProperties": {"type": "array", "minItems": 1}}
+      }
+    },
+    "criteria": {
+      "type": "object",
+      "description": "Soglie di promozione. Dopo la pre-registrazione si possono solo stringere, con un nuovo EXP.",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["op", "value"],
+        "properties": {
+          "op": {"enum": [">=", ">", "<=", "<", "=="]},
+          "value": {"type": "number"}
+        }
+      }
+    },
+    "baselines": {
+      "type": "array",
+      "items": {"enum": ["random_entry", "cash", "buy_and_hold"]},
+      "contains": {"const": "random_entry"}
+    },
+    "random_baseline_seeds": {"type": "integer", "minimum": 100},
+    "trials_before": {"type": "integer", "minimum": 0, "description": "Tentativi cumulativi già fatti su questi dati prima di questo EXP."},
+    "data_manifest_sha": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "cost_model": {"type": "string"},
+    "risk_config": {"type": "string"},
+    "max_iterations": {"const": 3}
+  },
+  "$defs": {
+    "range": {
+      "type": "object",
+      "required": ["start", "end"],
+      "properties": {
+        "start": {"type": "string", "format": "date"},
+        "end": {"type": "string", "format": "date"}
+      }
+    }
+  }
+}

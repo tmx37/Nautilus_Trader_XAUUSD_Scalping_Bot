@@ -1,0 +1,27 @@
+# Ambiente Python (uv crea .venv; il vecchio README creava il venv nella radice)
+.venv/
+bin/
+lib/
+lib64/
+include/
+pyvenv.cfg
+share/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.hypothesis/
+.import_linter_cache/
+
+# Dati scaricati e catalog (il manifest con gli hash è versionato in experiments/)
+data/raw/
+data/catalog/
+
+# Segreti e stato runtime
+*.env
+!*.example.env
+secrets/
+state/
+
+# Grafici generati (i report JSON restano versionati)
+experiments/reports/**/*.png

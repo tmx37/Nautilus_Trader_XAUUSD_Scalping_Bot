@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "experiments/schema/registry.schema.json",
+  "title": "Evento del registro esperimenti (una riga di registry.jsonl)",
+  "description": "Registro append-only: ogni riga è un evento. Un esperimento normale produce 'preregistered', poi 'completed', poi 'verdict'. 'retroactive' serve solo per evidenza importata da prima del registro.",
+  "type": "object",
+  "required": ["schema_version", "event", "id", "ts", "commit"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "event": {"enum": ["preregistered", "completed", "verdict", "retroactive"]},
+    "id": {"type": "string", "pattern": "^EXP-[0-9]{4}$"},
+    "ts": {"type": "string", "format": "date-time"},
+    "commit": {"type": "string", "pattern": "^[0-9a-f]{7,40}$"},
+    "kind": {"enum": ["backtest", "walkforward", "lockbox", "montecarlo", "demo", "live", "spike", "mt5_optimization"]},
+    "data_hash": {
+      "description": "Hash dei dati usati: sha256 del manifest del catalog, oppure mappa percorso → sha256.",
+      "oneOf": [
+        {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+        {"type": "object", "additionalProperties": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"}}
+      ]
+    },
+    "hypothesis": {
+      "type": "object",
+      "required": ["id", "iteration", "text"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^H-[0-9]{3}$"},
+        "iteration": {"type": "integer", "minimum": 1, "maximum": 3},
+        "text": {"type": "string", "minLength": 10}
+      }
+    },
+    "params": {"type": "object"},
+    "criteria": {"type": ["object", "null"]},
+    "prereg_path": {"type": "string"},
+    "prereg_sha": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "trials": {"type": "integer", "minimum": 0, "description": "Tentativi consumati da questo evento (conteggio per il DSR)."},
+    "results": {
+      "type": "object",
+      "properties": {
+        "report": {"type": "string"},
+        "metrics": {"type": "object"}
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "required": ["value", "diagnosis", "action"],
+      "properties": {
+        "value": {"enum": ["PROMOSSO", "DA RITARARE", "SCARTATO"]},
+        "diagnosis": {
+          "type": "array",
+          "items": {"enum": ["NO_EDGE_VS_RANDOM", "LOW_DSR", "LOCKBOX_NEGATIVE", "MAX_ITERATIONS", "COSTS_DOMINATE", "PARAM_FRAGILE", "TOO_FEW_TRADES", "OOS_DEGRADATION", "DD_EXCEEDS", "REGIME_CONCENTRATED", "EXECUTION_GAP", "ALL_CRITERIA_MET"]}
+        },
+        "action": {"type": "string"}
+      }
+    },
+    "adr": {"type": "array", "items": {"type": "string", "pattern": "^[0-9]{4}$"}},
+    "notes": {"type": "string"}
+  },
+  "allOf": [
+    {"if": {"properties": {"event": {"const": "preregistered"}}},
+     "then": {"required": ["kind", "hypothesis", "params", "criteria", "prereg_path", "prereg_sha", "data_hash"]}},
+    {"if": {"properties": {"event": {"const": "completed"}}},
+     "then": {"required": ["prereg_sha", "results", "trials"]}},
+    {"if": {"properties": {"event": {"const": "verdict"}}},
+     "then": {"required": ["verdict"]}},
+    {"if": {"properties": {"event": {"const": "retroactive"}}},
+     "then": {"required": ["kind", "hypothesis", "params", "data_hash", "results", "verdict", "trials"]}}
+  ]
+}
