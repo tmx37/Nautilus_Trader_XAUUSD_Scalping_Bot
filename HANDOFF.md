@@ -27,24 +27,23 @@ Il rischio è deciso da un componente separato (`riskgov`) che ha l'ultima parol
 - `uv sync` (Python 3.14.8 di sistema, `nautilus_trader==2.0.0rc7`, protobuf 7.36.2)
 - `uv run pytest`: 37 test verdi (config del rischio, tabella di riconciliazione, schemi, registro, regola append-only); 27 test delle invarianti del rischio presenti ma in skip (stub)
 - `uv run lint-imports`: `riskgov.core` e `ctrader_async` non importano `nautilus_trader`
+- Hook git attivi (`core.hooksPath = tools/githooks`, impostazione locale: va ripetuta su ogni clone): registro append-only e titoli dei commit con `[ADR-NNNN]`, `[EXP-NNNN]` o `[F<n>]`
 
 ## Cosa non funziona / non esiste ancora
 - Nessuna connessione a cTrader
 - Catalog dei dati vuoto
 - Nessuna strategia e nessun backtest
-- Hook git presenti ma non attivi
 
 ## Prossimi passi
 1. [utente] Aprire un demo cTrader (Razor, EUR) su **Pepperstone EU**. Verificare nel contratto: entità
    Pepperstone EU Ltd (CySEC 388/20), classe retail, protezione dal saldo negativo, leva ESMA. [DA VERIFICARE]
 2. [utente] Registrare l'app su openapi.ctrader.com (approvazione manuale) e chiedere al supporto
    Pepperstone EU se l'Open API è abilitata sui conti retail.
-3. Attivare gli hook: `git config core.hooksPath tools/githooks`.
-4. ADR 0005: congelare la finestra lockbox (proposta: 2024-01-01 → 2026-06-30) **prima** di qualsiasi
+3. ADR 0005: congelare la finestra lockbox (proposta: 2024-01-01 → 2026-06-30) **prima** di qualsiasi
    backtest.
-5. Pipeline Dukascopy → ParquetDataCatalog, con manifest sha256 e report di qualità.
-6. Implementare `riskgov.core` togliendo gli skip dei test uno alla volta.
-7. Spike F1 di `ctrader_async`: pre-registrare l'EXP, poi connessione, autenticazione e spot EURUSD.
+4. Pipeline Dukascopy → ParquetDataCatalog, con manifest sha256 e report di qualità.
+5. Implementare `riskgov.core` togliendo gli skip dei test uno alla volta.
+6. Spike F1 di `ctrader_async`: pre-registrare l'EXP, poi connessione, autenticazione e spot EURUSD.
 
 ## Decisioni
 | ADR | Titolo | Stato |
