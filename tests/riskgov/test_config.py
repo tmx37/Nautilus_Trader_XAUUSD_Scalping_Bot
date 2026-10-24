@@ -69,6 +69,8 @@ def test_kill_switch_fires_before_floor():
         ("risk.limits.daily.NORMALE", 0.01, "limits.daily"),
         ("risk.watchdog.hard_dd", 0.15, "watchdog.hard_dd"),
         ("risk.f4_ramp.r_normale", 0.02, "f4_ramp"),
+        ("risk.regime.cusum.w_r", 6.0, "cusum"),  # avviso non prima dell'allarme
+        ("risk.regime.cusum.w_r", 0.0, "cusum"),
     ],
 )
 def test_constraint_violations_are_rejected(raw, path, value, fragment):

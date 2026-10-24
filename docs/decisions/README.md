@@ -16,5 +16,7 @@ Regole:
 | [0002](0002-nautilustrader-v2-rc-fissata.md) | NautilusTrader v2 con RC fissata esattamente | accettata con condizione | 2026-10-22 |
 | [0003](0003-archiviazione-legacy-xauusd.md) | Archiviazione del codice XAUUSD legacy e verdetto EXP-0000 | accettata | 2026-10-22 |
 | [0004](0004-architettura-gestore-rischio.md) | Architettura del gestore del rischio | proposta | 2026-10-22 |
+| [0005](0005-finestra-lockbox.md) | Finestra lockbox per le ipotesi FX di F2 | accettata | 2026-10-24 |
+| [0006](0006-semantica-riskgov-core.md) | Semantica di `riskgov.core` dove il PIANO non la fissa | accettata | 2026-10-24 |
 
-ADR previsti a breve: 0005 finestra lockbox (F0, prima di qualsiasi backtest); mappatura bracket → SL/TP di posizione nell'adapter (F1); soglie calibrate della macchina a stati (fine F2).
+ADR previsti a breve: mappatura bracket → SL/TP di posizione nell'adapter (F1); soglie calibrate della macchina a stati (fine F2).

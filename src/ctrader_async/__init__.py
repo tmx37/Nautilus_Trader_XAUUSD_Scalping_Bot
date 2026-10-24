@@ -3,12 +3,17 @@
 Nessuna dipendenza da NautilusTrader né dal resto del sistema (contratto import-linter): lo usano sia
 l'adapter `nt_ctrader` sia il watchdog. Decisione: ADR 0001.
 
+Implementato:
+- `oauth`: URL di autorizzazione, scambio del codice, refresh HTTP, ricezione del redirect su loopback;
+- `tokens`: archivio dei token con scrittura atomica, permessi 600 e lock fra processi;
+- `settings`: lettura e validazione di `config/ctrader.env`.
+
 Da implementare in F1 (PIANO §2.1):
 - framing (4 byte di lunghezza + ProtoMessage) e connessione TLS a demo/live.ctraderapi.com;
 - heartbeat ogni 10 s e timeout di inattività in ingresso;
 - correlazione richiesta/risposta per clientMsgId;
 - token bucket 50 req/s e 5 req/s per lo storico, con gestione di retryAfter;
 - riconnessione con backoff e jitter, ri-autenticazione app/account;
-- refresh del token OAuth con scrittura atomica (il refresh invalida la coppia precedente);
+- refresh del token durante la sessione (ProtoOARefreshTokenReq o `tokens.refresh_stored`);
 - conversioni di unità: prezzi ×1e5, volumi in centesimi di unità, denaro ×10^moneyDigits.
 """

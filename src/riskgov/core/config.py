@@ -71,6 +71,7 @@ class RegimeConfig:
     arresto_enter_dd: float
     arresto_repeat_pausa_days: int
     cusum_k_r: float
+    cusum_w_r: float
     cusum_h_r: float
 
 
@@ -170,7 +171,7 @@ def parse_risk_config(data: Any) -> RiskConfig:
         reg["pausa"], "risk.regime.pausa", {"enter_dd", "min_days", "shadow_min_trades", "max_days"}
     )
     arr = _section(reg["arresto"], "risk.regime.arresto", {"enter_dd", "repeat_pausa_days"})
-    cus = _section(reg["cusum"], "risk.regime.cusum", {"k_r", "h_r"})
+    cus = _section(reg["cusum"], "risk.regime.cusum", {"k_r", "w_r", "h_r"})
     lim = _section(
         r["limits"],
         "risk.limits",
@@ -222,6 +223,7 @@ def parse_risk_config(data: Any) -> RiskConfig:
             arresto_enter_dd=_num(arr["enter_dd"], "risk.regime.arresto.enter_dd"),
             arresto_repeat_pausa_days=_int(arr["repeat_pausa_days"], "risk.regime.arresto.repeat_pausa_days"),
             cusum_k_r=_num(cus["k_r"], "risk.regime.cusum.k_r"),
+            cusum_w_r=_num(cus["w_r"], "risk.regime.cusum.w_r"),
             cusum_h_r=_num(cus["h_r"], "risk.regime.cusum.h_r"),
         ),
         limits=LimitsConfig(
@@ -294,7 +296,10 @@ def validate(cfg: RiskConfig) -> list[str]:
     need(0 < reg.pausa_min_days <= reg.pausa_max_days, "serve 0 < pausa.min_days <= pausa.max_days")
     need(reg.pausa_shadow_min_trades >= 1, "regime.pausa.shadow_min_trades deve essere >= 1")
     need(reg.arresto_repeat_pausa_days >= 1, "regime.arresto.repeat_pausa_days deve essere >= 1")
-    need(reg.cusum_k_r >= 0 and reg.cusum_h_r > 0, "cusum: serve k_r >= 0 e h_r > 0")
+    need(
+        reg.cusum_k_r >= 0 and 0 < reg.cusum_w_r < reg.cusum_h_r,
+        "cusum: serve k_r >= 0 e 0 < w_r < h_r (avviso prima dell'allarme)",
+    )
 
     # Con K >= D_kill e lambda <= 1 - D_kill il kill switch scatta sempre prima del floor (ADR 0004).
     need(cppi.k >= reg.arresto_enter_dd, "cppi.K deve essere >= regime.arresto.enter_dd")

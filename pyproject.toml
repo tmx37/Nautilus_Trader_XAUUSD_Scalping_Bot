@@ -14,6 +14,9 @@ dependencies = [
     "scipy>=1.14",
 ]
 
+[project.scripts]
+ctrader-login = "tradingsys.cli.ctrader_login:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8.3",
@@ -33,6 +36,8 @@ packages = ["src/ctrader_async", "src/nt_ctrader", "src/riskgov", "src/tradingsy
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --import-mode=importlib"
+# tests/factories.py: costruttori e strategie hypothesis condivisi dai test.
+pythonpath = ["tests"]
 markers = [
     "demo: richiede credenziali e connessione al conto demo cTrader (esclusi di default con -m 'not demo')",
     "integration: test con finto server cTrader o BacktestEngine",

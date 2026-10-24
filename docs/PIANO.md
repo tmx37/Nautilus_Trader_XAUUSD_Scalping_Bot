@@ -141,7 +141,7 @@ Perché queste soglie:
 - Calibrazione: si fa un bootstrap a blocchi settimanali di 10.000 percorsi annuali, passati nello **stesso** `riskgov.core`, sulla distribuzione R dell'OOS **con aspettativa tagliata del 50%**. Obiettivi:
   - P(ARRESTO in 12 mesi) ≤ 10% sulla distribuzione tagliata;
   - P(ARRESTO in 12 mesi) ≥ 50% sotto l'ipotesi nulla (media = −costi).
-- I soli DD sono lenti a riconoscere un sistema senza vantaggio, quindi si aggiunge un **CUSUM sugli R**: `S = max(0, S + k − R)`, allarme quando S > h.
+- I soli DD sono lenti a riconoscere un sistema senza vantaggio, quindi si aggiunge un **CUSUM sugli R**: `S = max(0, S + k − R)`, avviso quando S > w, allarme quando S > h (ADR 0006).
 
 **Limiti giornalieri e settimanali (R1.3b).**
 - Sono **soglie d'ingresso** calcolate sulla **perdita impegnata**: (E_inizio_periodo − E) + Σ rischio aperto corretto per i gap + rischio del nuovo trade.
@@ -197,7 +197,7 @@ Altre regole:
 - Ogni azione del watchdog scrive `ARRESTO.lock`, che il nodo legge all'avvio.
 - Gira su un host diverso (circa €4/mese) per evitare guasti correlati.
 
-**Schema `config/risk.example.yaml`.** I nomi delle chiavi sono definitivi, i valori sono quelli iniziali indicati sopra.
+**Schema `config/risk.example.yaml`.** I nomi delle chiavi sono definitivi, i valori sono quelli iniziali indicati sopra. La chiave `cusum.w_r` (soglia dell'avviso CUSUM) è stata aggiunta con l'ADR 0006, che fissa anche la semantica dei punti che questa sezione lascia aperti (rientro dalla PAUSA, base dei limiti di periodo, prelievi, weekend).
 
 ```yaml
 risk:
@@ -210,7 +210,7 @@ risk:
     difensivo: {enter_dd: 0.06, exit_dd: 0.03, min_trades: 5}
     pausa: {enter_dd: 0.10, min_days: 10, shadow_min_trades: 8, max_days: 20}
     arresto: {enter_dd: 0.15, repeat_pausa_days: 60}
-    cusum: {k_r: 0.1, h_r: 6.0}
+    cusum: {k_r: 0.1, w_r: 4.0, h_r: 6.0}
   limits:
     day_boundary: "17:00 America/New_York"
     daily: {NORMALE: 0.02, DIFENSIVO: 0.01}

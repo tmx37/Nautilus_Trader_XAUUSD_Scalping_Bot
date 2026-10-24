@@ -47,7 +47,7 @@ Git hooks are in `tools/githooks/` but are only active after `git config core.ho
   - Criteria never change after results are seen.
   - Never edit existing lines of `registry.jsonl`; append a correcting event instead.
   - At most 3 iterations per hypothesis.
-  - The lockbox window is used once.
+  - The lockbox window (2024-01-01 → 2026-06-30) is opened once per hypothesis, with frozen parameters, as its own prereg'd EXP; a negative result discards the hypothesis (ADR 0005).
 - **Decisions**:
   - Every decision gets an ADR in `docs/decisions/` (template there).
   - ADRs are never deleted; they get superseded.
